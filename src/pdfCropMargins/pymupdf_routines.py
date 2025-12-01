@@ -42,6 +42,7 @@ https://github.com/PySimpleGUI/PySimpleGUI/blob/master/DemoPrograms/Demo_PDF_Vie
 import sys
 import warnings
 from . import external_program_calls as ex
+from .page_configuration import PageConfiguration
 
 try: # Extra dependencies for the GUI version.  Make sure they are installed.
     with warnings.catch_warnings():
@@ -222,7 +223,9 @@ class MuPdfDocument:
         """Initialize an empty object.  The `args` parameter should be passed a
         parsed command-line argument object from argparse with the user-selected
         command-line options."""
-        self.args = args
+        # Extract class: Move args-related configuration to PageConfiguration
+        self.page_config = PageConfiguration(args)
+        self.args = args  # Keep for backward compatibility initially
         self.clear_cache()
         self.document = None
 
@@ -248,12 +251,12 @@ class MuPdfDocument:
 
         # Decrypt if necessary.
         if self.document.is_encrypted:
-            if self.args.password:
+            if self.page_config.has_password():
                 # Return code is positive for success, negative for failure. If positive,
                 #   bit 0 set = no password required
                 #   bit 1 set = user password authenticated
                 #   bit 2 set = owner password authenticated
-                authenticate_code = self.document.authenticate(self.args.password)
+                authenticate_code = self.document.authenticate(self.page_config.get_password())
                 if self.document.is_encrypted:
                     print("\nError in pdfCropMargins: The document was not correctly "
                           "decrypted by PyMuPDF using the password passed in.",
@@ -374,11 +377,10 @@ class MuPdfDocument:
         pixmap = page_crop_display_list.get_pixmap(matrix=fitz.Identity,
                                                   colorspace=colorspace,
                                                   clip=None, alpha=False)
-        if self.args:
-            # TODO: Is this working right?  Here, you change matrix in get_pixmap:
-            # https://stackoverflow.com/questions/63821179/extract-images-from-pdf-in-high-resolution-with-python
-            # Is setting actually changing the matrix?
-            resolution = self.args.resX, self.args.resY
+        # TODO: Is this working right?  Here, you change matrix in get_pixmap:
+        # https://stackoverflow.com/questions/63821179/extract-images-from-pdf-in-high-resolution-with-python
+        # Is setting actually changing the matrix?
+        resolution = self.page_config.get_resolution_tuple()
         pixmap.set_dpi(*resolution)
 
         # Maybe pgm below??

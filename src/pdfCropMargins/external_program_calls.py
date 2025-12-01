@@ -37,6 +37,7 @@ import time
 import contextlib
 import platform
 import threading
+from .constants import DEFAULT_X_RESOLUTION, DEFAULT_Y_RESOLUTION
 
 WINDOWS_GS64_GLOB = r"C:\Program Files*\gs\gs*\bin\gswin64c.exe"
 WINDOWS_GS32_GLOB = r"C:\Program Files*\gs\gs*\bin\gswin32c.exe"
@@ -553,7 +554,7 @@ def get_bounding_box_list_ghostscript(input_doc_fname, res_x, res_y, full_page_b
     return bounding_box_list
 
 def render_pdf_file_to_image_files_pdftoppm_ppm(pdf_file_name, root_output_file_path,
-                                           res_x=150, res_y=150, extra_args=None):
+                                           res_x=DEFAULT_X_RESOLUTION, res_y=DEFAULT_Y_RESOLUTION, extra_args=None):
     """Use the pdftoppm program to render a PDF file to .png images.  The
     root_output_file_path is prepended to all the output files, which have numbers
     and extensions added.  Extra arguments can be passed as a list in extra_args.
@@ -575,7 +576,7 @@ def render_pdf_file_to_image_files_pdftoppm_ppm(pdf_file_name, root_output_file_
     return comm_output
 
 def render_pdf_file_to_image_files_pdftoppm_pgm(pdf_file_name, root_output_file_path,
-                                           res_x=150, res_y=150):
+                                           res_x=DEFAULT_X_RESOLUTION, res_y=DEFAULT_Y_RESOLUTION):
     """Same as renderPdfFileToImageFile_pdftoppm_ppm but with -gray option for pgm."""
 
     comm_output = render_pdf_file_to_image_files_pdftoppm_ppm(pdf_file_name,

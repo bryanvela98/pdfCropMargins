@@ -55,6 +55,7 @@ Source code site: https://github.com/abarker/pdfCropMargins
 import argparse
 import sys
 from . import __version__ # Get the version number from the __init__.py file.
+from .constants import DEFAULT_DPI, DEFAULT_X_RESOLUTION, DEFAULT_Y_RESOLUTION
 
 DEFAULT_THRESHOLD_VALUE = 191
 
@@ -586,18 +587,18 @@ cmd_parser.add_argument("-ns", "--numSmooths", type=int, default=0, metavar="INT
    operation to the resulting images this many times.  This can be useful for
    noisy images.^^n""")
 
-cmd_parser.add_argument("-x", "--resX", type=int, default=72,
+cmd_parser.add_argument("-x", "--resX", type=int, default=DEFAULT_DPI,
                         metavar="DPI", help="""
 
    The x-resolution in dots per inch to use when the image is rendered to find
-   the bounding boxes.  The default is 150.  Higher values produce more precise
+   the bounding boxes.  The default is 72.  Higher values produce more precise
    bounding boxes but require more time and memory.^^n""")
 
-cmd_parser.add_argument("-y", "--resY", type=int, default=72,
+cmd_parser.add_argument("-y", "--resY", type=int, default=DEFAULT_DPI,
                         metavar="DPI", help="""
 
    The y-resolution in dots per inch to use when the image is rendered to find
-   the bounding boxes.  The default is 150.  Higher values produce more precise
+   the bounding boxes.  The default is 72.  Higher values produce more precise
    bounding boxes but require more time and memory.^^n""")
 
 cmd_parser.add_argument("-sr", "--screenRes", default=None, metavar="STR", help="""

@@ -107,6 +107,8 @@ from . import external_program_calls as ex
 project_src_directory = ex.project_src_directory
 
 from .calculate_bounding_boxes import get_bounding_box_list
+from .crop_utils import (handle_same_page_size_option, combine_tuple_lists_with_mask, 
+                        validate_crop_arguments)
 
 ##
 ## Some data used by the program.
@@ -230,74 +232,17 @@ def calculate_crop_list(full_page_box_list, bounding_box_list, angle_list,
     # tight bounding box, and so part of the text within the tight bounding box
     # will also be cropped (unless absolute offsets are used to counter that).
 
-    def combine_tuple_lists_with_mask(mask, default_list, optional_list):
-        """A utility function used below.  The mask is a four-tuple of strings
-        't' or 'f' for replacing elements of `default_list` with the
-        corresponding elements of `optional_list`.  Used mainly for processing
-        the 'uniform4' option."""
-        final_list = []
-        for default_tuple, optional_tuple in zip(default_list,
-                                                 optional_list):
-            new_default_tuple = list(default_tuple)
-            for index, char in enumerate(mask):
-                if char == "t":
-                    new_default_tuple[index] = optional_tuple[index]
-            final_list.append(tuple(new_default_tuple))
-
-        return final_list
+    # Note: combine_tuple_lists_with_mask function moved to crop_utils.py
 
     num_pages = len(bounding_box_list)
     page_range = range(num_pages)
     num_pages_to_crop = len(page_nums_to_crop)
 
-    # Handle the '--samePageSize' option.
+    # Handle the '--samePageSize' option using extracted method.
     # Note that this is always done first, even before evenodd is handled.  It
     # is only applied to the pages in the set `page_nums_to_crop`.
-
-    order_n = 0
-    if args.samePageSizeOrderStat:
-        args.samePageSize = True
-        order_n = min(args.samePageSizeOrderStat[0], num_pages_to_crop - 1)
-        order_n = max(order_n, 0)
-
-    if args.samePageSize or args.setSamePageSize:
-        if args.samePageSize: # Calculate the page containing all the other selected pages.
-            if args.verbose:
-                print("\nSetting each page size to the smallest box bounding all the pages.")
-                if order_n != 0:
-                    print("But ignoring the largest {} pages in calculating each edge."
-                            .format(order_n))
-            same_size_bounding_box = [
-                  # We want the smallest of the left and bottom edges.
-                  sorted(full_page_box_list[pg][0] for pg in page_nums_to_crop),
-                  sorted(full_page_box_list[pg][1] for pg in page_nums_to_crop),
-                  # We want the largest of the right and top edges.
-                  sorted((full_page_box_list[pg][2] for pg in page_nums_to_crop), reverse=True),
-                  sorted((full_page_box_list[pg][3] for pg in page_nums_to_crop), reverse=True)
-                  ]
-            same_size_bounding_box = [sortlist[order_n] for sortlist in same_size_bounding_box]
-
-        else: # Set the page size to the box passed in (ignored if `--samePageSize` is set).
-            same_size_bounding_box = [float(f) for f in args.setSamePageSize]
-            if args.verbose:
-                print("\nSetting each page size to the bounding box passed in:"
-                      f"\n   {same_size_bounding_box}")
-
-        same_size_bounding_box_list = [same_size_bounding_box] * num_pages
-
-        if args.samePageSize4:
-            same_size_bounding_box_list = combine_tuple_lists_with_mask(args.samePageSize4,
-                                                                        full_page_box_list,
-                                                                        same_size_bounding_box_list)
-
-        # Set `full_page_box_list` to `same_size_bounding_box` for the pages selected.
-        new_full_page_box_list = []
-        for p_num, f_box in enumerate(full_page_box_list):
-            if p_num not in page_nums_to_crop:
-                new_full_page_box_list.append(f_box)
-            else:
-                new_full_page_box_list.append(same_size_bounding_box_list[p_num])
-        full_page_box_list = new_full_page_box_list
+    full_page_box_list = handle_same_page_size_option(
+        args, full_page_box_list, page_nums_to_crop, num_pages_to_crop)
 
     # Handle the '--evenodd' option if it was selected.
     if args.evenodd:
